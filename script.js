@@ -1,133 +1,295 @@
 
+/* =========================================
+   RAGHU WORKS
+   Main JavaScript
+========================================= */
+
 document.addEventListener("DOMContentLoaded", () => {
-    // Mobile navigation
-    const menuToggle = document.querySelector(".menu-toggle");
-    const navLinks = document.querySelector("#navLinks");
+
+    // ---------- ELEMENTS ----------
+
+    const header = document.getElementById("header");
+    const menuToggle = document.getElementById("menuToggle");
+    const navLinks = document.getElementById("navLinks");
     const navItems = document.querySelectorAll("#navLinks a");
 
+    const contactForm = document.getElementById("contactForm");
+    const formMessage = document.getElementById("formMessage");
+
+    const footerYear = document.getElementById("year");
+
+
+    // ---------- MOBILE NAVIGATION ----------
+
+    function openMenu() {
+        if (!menuToggle || !navLinks) return;
+
+        menuToggle.classList.add("is-open");
+        navLinks.classList.add("is-open");
+
+        menuToggle.setAttribute("aria-expanded", "true");
+        menuToggle.setAttribute("aria-label", "Close navigation menu");
+    }
+
+    function closeMenu() {
+        if (!menuToggle || !navLinks) return;
+
+        menuToggle.classList.remove("is-open");
+        navLinks.classList.remove("is-open");
+
+        menuToggle.setAttribute("aria-expanded", "false");
+        menuToggle.setAttribute("aria-label", "Open navigation menu");
+    }
+
     if (menuToggle && navLinks) {
-        function closeMenu() {
-            menuToggle.classList.remove("is-open");
-            navLinks.classList.remove("is-open");
-            menuToggle.setAttribute("aria-expanded", "false");
-            menuToggle.setAttribute("aria-label", "Open navigation menu");
-        }
 
         menuToggle.addEventListener("click", () => {
-            const isOpen = menuToggle.classList.toggle("is-open");
 
-            navLinks.classList.toggle("is-open", isOpen);
-            menuToggle.setAttribute("aria-expanded", String(isOpen));
-            menuToggle.setAttribute(
-                "aria-label",
-                isOpen ? "Close navigation menu" : "Open navigation menu"
-            );
+            const isOpen = menuToggle.classList.contains("is-open");
+
+            if (isOpen) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+
         });
+
+        // Close menu after selecting a navigation link.
 
         navItems.forEach((link) => {
+
             link.addEventListener("click", closeMenu);
+
         });
+
+        // Close menu when clicking outside it.
 
         document.addEventListener("click", (event) => {
-            if (
-                !menuToggle.contains(event.target) &&
-                !navLinks.contains(event.target)
-            ) {
+
+            const clickedMenu = navLinks.contains(event.target);
+            const clickedButton = menuToggle.contains(event.target);
+
+            if (!clickedMenu && !clickedButton) {
                 closeMenu();
             }
+
         });
 
+        // Close menu with Escape key.
+
         document.addEventListener("keydown", (event) => {
+
             if (event.key === "Escape") {
                 closeMenu();
             }
+
         });
+
+        // Close menu when switching to desktop layout.
 
         window.addEventListener("resize", () => {
-            if (window.innerWidth > 768) {
+
+            if (window.innerWidth > 800) {
                 closeMenu();
             }
+
         });
+
     }
 
-    // Section reveal animations
+
+    // ---------- HEADER SCROLL EFFECT ----------
+
+    function updateHeader() {
+
+        if (!header) return;
+
+        if (window.scrollY > 30) {
+            header.classList.add("scrolled");
+        } else {
+            header.classList.remove("scrolled");
+        }
+
+    }
+
+    window.addEventListener("scroll", updateHeader, { passive: true });
+
+    updateHeader();
+
+
+    // ---------- SCROLL REVEAL ANIMATION ----------
+
     const revealElements = document.querySelectorAll(
-        ".section-heading, .section-top, .service-card, .project-card, .about-content, .process-item, .contact-content, .contact-form"
+        ".hero-copy, .hero-art, " +
+        ".section-heading, " +
+        ".service-card, " +
+        ".project-card, " +
+        ".about-title, .about-copy, " +
+        ".process-item, " +
+        ".contact-intro, .contact-form"
     );
 
-    revealElements.forEach((element) => {
-        element.classList.remove("reveal");
-        element.classList.add("is-visible");
-    });
+    if ("IntersectionObserver" in window) {
 
-    // Automatic footer year
-    const yearElement = document.querySelector("#year");
+        const revealObserver = new IntersectionObserver(
+            (entries, observer) => {
 
-    if (yearElement) {
-        yearElement.textContent = new Date().getFullYear();
+                entries.forEach((entry) => {
+
+                    if (entry.isIntersecting) {
+
+                        entry.target.classList.add("visible");
+
+                        observer.unobserve(entry.target);
+
+                    }
+
+                });
+
+            },
+            {
+                threshold: 0.12
+            }
+        );
+
+        revealElements.forEach((element) => {
+
+            element.classList.add("reveal");
+
+            revealObserver.observe(element);
+
+        });
+
+    } else {
+
+        revealElements.forEach((element) => {
+
+            element.classList.add("visible");
+
+        });
+
     }
 
-    // Contact form submission
-    const contactForm = document.querySelector("#contactForm");
-    const formMessage = document.querySelector("#formMessage");
 
-    if (contactForm && formMessage) {
+    // ---------- FOOTER YEAR ----------
+
+    if (footerYear) {
+
+        footerYear.textContent = new Date().getFullYear();
+
+    }
+
+
+    // ---------- CONTACT FORM ----------
+
+    if (contactForm) {
+
         contactForm.addEventListener("submit", async (event) => {
+
             event.preventDefault();
 
+            // Check required fields.
+
             if (!contactForm.checkValidity()) {
+
                 contactForm.reportValidity();
+
                 return;
+
             }
 
             const submitButton = contactForm.querySelector(
                 'button[type="submit"]'
             );
 
-            const originalButtonText = submitButton
+            const originalButtonHTML = submitButton
                 ? submitButton.innerHTML
                 : "";
 
-            formMessage.textContent = "Sending your enquiry...";
-            formMessage.classList.add("is-visible");
+            // Disable button while sending.
 
             if (submitButton) {
+
                 submitButton.disabled = true;
+
                 submitButton.textContent = "Sending...";
+
+            }
+
+            if (formMessage) {
+
+                formMessage.textContent = "";
+
             }
 
             try {
+
                 const response = await fetch(contactForm.action, {
+
                     method: "POST",
+
                     body: new FormData(contactForm),
+
                     headers: {
                         Accept: "application/json"
                     }
+
                 });
 
-                if (response.ok) {
+                if (!response.ok) {
+
+                    const result = await response.json().catch(() => null);
+
+                    const errorText = result?.errors
+                        ?.map((error) => error.message)
+                        .join(", ");
+
+                    throw new Error(
+                        errorText || "Unable to send your enquiry. Please try again."
+                    );
+
+                }
+
+                // Success.
+
+                if (formMessage) {
+
                     formMessage.textContent =
-                        "Thank you! Your enquiry has been sent successfully. I will get back to you soon.";
+                        "Thank you! Your enquiry has been sent successfully.";
 
-                    contactForm.reset();
-                } else {
-                    const result = await response.json();
-
-                    const errorMessage = result.errors
-                        ? result.errors.map((error) => error.message).join(", ")
-                        : "Something went wrong. Please try again.";
-
-                    formMessage.textContent = errorMessage;
                 }
+
+                contactForm.reset();
+
             } catch (error) {
-                formMessage.textContent =
-                    "Unable to send your enquiry. Please check your internet connection and try again.";
-            } finally {
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
+
+                // Error.
+
+                if (formMessage) {
+
+                    formMessage.textContent =
+                        error.message ||
+                        "Something went wrong. Please try again.";
+
                 }
+
+            } finally {
+
+                // Restore button.
+
+                if (submitButton) {
+
+                    submitButton.disabled = false;
+
+                    submitButton.innerHTML = originalButtonHTML;
+
+                }
+
             }
+
         });
+
     }
+
 });
